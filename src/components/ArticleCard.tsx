@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Globe, Mic, Lightbulb, Clock, ArrowUpRight, X, Loader2 } from "lucide-react";
-import { streamFromEdgeFunction, getUserProfile } from "@/lib/vaaniApi";
+import { streamFromEdgeFunction, getUserProfile, stripMarkdown } from "@/lib/vaaniApi";
 
 interface ArticleCardProps {
   title: string;
