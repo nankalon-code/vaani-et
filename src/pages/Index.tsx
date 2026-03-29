@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Layout from "@/components/Layout";
 import ArticleCard from "@/components/ArticleCard";
 import { demoArticles, categories } from "@/data/demoArticles";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2, RefreshCw, Wifi } from "lucide-react";
 import { Link } from "react-router-dom";
+import { callEdgeFunction, getUserProfile } from "@/lib/vaaniApi";
+import { useToast } from "@/hooks/use-toast";
 
 const features = [
   {
@@ -35,10 +37,57 @@ const features = [
 
 const Index = () => {
   const [activeCategory, setActiveCategory] = useState("All");
+  const [articles, setArticles] = useState(demoArticles);
+  const [isLive, setIsLive] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
-  const filtered = activeCategory === "All"
-    ? demoArticles
-    : demoArticles.filter((a) => a.category === activeCategory);
+  const fetchLiveNews = async (category?: string) => {
+    setLoading(true);
+    try {
+      const profile = getUserProfile();
+      const data = await callEdgeFunction("vaani-news", {
+        category: category || "All",
+        language: profile.language,
+        literacy: profile.literacy,
+        city: profile.city,
+      });
+      const content = data.result;
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setArticles(parsed);
+          setIsLive(true);
+          toast({ title: "Live Feed Active", description: `${parsed.length} articles loaded from AI newsroom.` });
+        }
+      }
+    } catch (e) {
+      console.error("Failed to fetch live news:", e);
+      toast({
+        title: "Feed Error",
+        description: e instanceof Error ? e.message : "Could not fetch live news. Showing cached articles.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveNews();
+  }, []);
+
+  const handleCategoryChange = (cat: string) => {
+    setActiveCategory(cat);
+    if (isLive) {
+      fetchLiveNews(cat);
+    }
+  };
+
+  const filtered = !isLive && activeCategory !== "All"
+    ? articles.filter((a) => a.category === activeCategory)
+    : articles;
 
   return (
     <Layout>
@@ -151,14 +200,30 @@ const Index = () => {
           ))}
         </div>
 
-        {/* Category filter */}
+        {/* Category filter + Live badge */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="font-editorial text-2xl font-bold">Live Feed</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="font-editorial text-2xl font-bold">Live Feed</h2>
+            {isLive && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-0.5 text-[10px] font-body font-semibold text-emerald-400 uppercase tracking-wider">
+                <Wifi className="h-3 w-3" />
+                Live
+              </span>
+            )}
+            <button
+              onClick={() => fetchLiveNews(activeCategory)}
+              disabled={loading}
+              className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-body text-muted-foreground hover:border-gold/30 hover:text-gold transition-colors disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+              Refresh
+            </button>
+          </div>
           <div className="flex items-center gap-2 overflow-x-auto">
             {categories.map((cat) => (
               <button
                 key={cat}
-                onClick={() => setActiveCategory(cat)}
+                onClick={() => handleCategoryChange(cat)}
                 className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-body font-medium transition-all ${
                   activeCategory === cat
                     ? "gold-gradient text-primary-foreground"
@@ -171,14 +236,22 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Loading state */}
+        {loading && articles.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader2 className="h-8 w-8 text-gold animate-spin" />
+            <p className="text-sm font-body text-muted-foreground">Fetching latest news from AI newsroom...</p>
+          </div>
+        )}
+
         {/* Feed */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {filtered.map((article, i) => (
-            <ArticleCard key={article.title} {...article} index={i} />
+            <ArticleCard key={`${article.title}-${i}`} {...article} index={i} />
           ))}
         </div>
 
-        {/* What India Thinks - Unique Feature */}
+        {/* What India Thinks */}
         <motion.section
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
