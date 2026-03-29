@@ -6,18 +6,25 @@ export function getUserProfile() {
     const raw = localStorage.getItem("vaani_profile");
     if (!raw) return { language: "Hindi", literacy: "Intermediate", city: "Mumbai", interests: [] };
     const data = JSON.parse(raw);
-    const languageOptions = ["Hindi", "Tamil", "Telugu", "Bengali", "Marathi", "Gujarati", "Kannada", "Malayalam", "Punjabi", "Odia", "Urdu", "English"];
-    const literacyOptions = ["Beginner", "Intermediate", "Advanced", "Expert"];
-    const cityOptions = ["Mumbai", "Delhi", "Bengaluru", "Hyderabad", "Chennai", "Kolkata", "Pune", "Ahmedabad", "Jaipur", "Surat", "Patna", "Lucknow"];
-    return {
-      language: languageOptions[(data[0]?.indexOf(data[0]?.[0]) ?? 0)] || data[0]?.[0] || "Hindi",
-      literacy: literacyOptions[(data[1]?.indexOf(data[1]?.[0]) ?? 0)]?.split(" -- ")[0] || "Intermediate",
-      city: data[2]?.[0] || "Mumbai",
-      interests: data[3] || [],
-    };
+    // data is { "0": ["Hindi"], "1": ["Beginner -- explain everything simply"], "2": ["Mumbai"], "3": ["Stock Markets", ...] }
+    const lang = data["0"]?.[0] || data[0]?.[0] || "Hindi";
+    const literacyRaw = data["1"]?.[0] || data[1]?.[0] || "Intermediate";
+    const literacy = literacyRaw.split(" -- ")[0] || "Intermediate";
+    const city = data["2"]?.[0] || data[2]?.[0] || "Mumbai";
+    const interests = data["3"] || data[3] || [];
+    return { language: lang, literacy, city, interests };
   } catch {
     return { language: "Hindi", literacy: "Intermediate", city: "Mumbai", interests: [] };
   }
+}
+
+export function stripMarkdown(text: string): string {
+  return text
+    .replace(/\*\*\*(.*?)\*\*\*/g, "$1")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/^[-*]\s+/gm, "- ");
 }
 
 export async function streamFromEdgeFunction({

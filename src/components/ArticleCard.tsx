@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Globe, Mic, Lightbulb, Clock, ArrowUpRight, X, Loader2 } from "lucide-react";
-import { streamFromEdgeFunction, getUserProfile } from "@/lib/vaaniApi";
+import { streamFromEdgeFunction, getUserProfile, stripMarkdown } from "@/lib/vaaniApi";
 
 interface ArticleCardProps {
   title: string;
@@ -42,7 +42,7 @@ const ArticleCard = ({ title, summary, category, time, source, index }: ArticleC
         city: profile.city,
         action,
       },
-      onDelta: (text) => setResult((prev) => prev + text),
+      onDelta: (text) => setResult((prev) => stripMarkdown(prev + text)),
       onDone: () => setLoading(false),
       onError: (err) => {
         setResult(`Error: ${err}`);
