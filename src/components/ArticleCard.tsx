@@ -42,7 +42,7 @@ const ArticleCard = ({ title, summary, category, time, source, index }: ArticleC
         city: profile.city,
         action,
       },
-      onDelta: (text) => setResult((prev) => prev + text),
+      onDelta: (text) => setResult((prev) => stripMarkdown(prev + text)),
       onDone: () => setLoading(false),
       onError: (err) => {
         setResult(`Error: ${err}`);
