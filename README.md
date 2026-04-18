@@ -54,7 +54,7 @@ python agents/scraper.py        # Test DB + feeds
 uvicorn main:app --reload --port 8000
 ```
 
-API docs: **http://localhost:8000/docs**
+
 
 ### Frontend
 
@@ -64,7 +64,7 @@ npm install
 npm run dev
 ```
 
-App: **http://localhost:3000**
+App: **[http://localhost:3000](https://vaani-et.lovable.app/)**
 
 ---
 
