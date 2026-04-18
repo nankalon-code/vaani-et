@@ -64,7 +64,7 @@ npm install
 npm run dev
 ```
 
-App: **[http://localhost:3000](https://vaani-et.lovable.app/)**
+App: **https://vaani-et.lovable.app/**
 
 ---
 
